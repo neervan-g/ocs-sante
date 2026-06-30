@@ -6,10 +6,7 @@ import { useIsMobile } from "../hooks/useIsMobile.js";
 import { usePatientAuth } from "../hooks/usePatientAuth.jsx";
 import { formatDisplayName } from "../lib/formatDisplayName.js";
 
-const STAFF_PORTAL_URL =
-  typeof window !== "undefined" && window.location.hostname !== "localhost"
-    ? "https://staff.ocsvp.com/login"
-    : "http://localhost:5173/login";
+const STAFF_PORTAL_URL = import.meta.env.VITE_STAFF_PORTAL_URL || "http://localhost:5173/login";
 
 const INPUT_CLASS =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm font-medium text-[#14213d] placeholder:text-gray-400 transition-all focus:border-[#065a60] focus:outline-none focus:ring-4 focus:ring-[#065a60]/5";

@@ -4,10 +4,7 @@ import toast from "react-hot-toast";
 import { usePatientAuth } from "../hooks/usePatientAuth.jsx";
 import { formatDisplayName } from "../lib/formatDisplayName.js";
 
-const STAFF_PORTAL_URL =
-  typeof window !== "undefined" && window.location.hostname !== "localhost"
-    ? "https://staff.ocsvp.com/login"
-    : "http://localhost:5173/login";
+const STAFF_PORTAL_URL = import.meta.env.VITE_STAFF_PORTAL_URL || "http://localhost:5173/login";
 
 function PatientLoginPage() {
   const location = useLocation();
