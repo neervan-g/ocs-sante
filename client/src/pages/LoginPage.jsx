@@ -18,9 +18,7 @@ function LoginPage() {
     password: "",
   });
 
-  const isProdHost =
-    typeof window !== "undefined" && window.location.hostname !== "localhost";
-  const WELCOME_URL = isProdHost ? "https://ocsvp.com" : "http://localhost:5174";
+  const WELCOME_URL = import.meta.env.VITE_WELCOME_PORTAL_URL || "http://localhost:5174";
 
   const attemptedPath = useMemo(
     () => location.state?.from?.pathname || "",

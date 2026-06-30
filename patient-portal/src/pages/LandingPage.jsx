@@ -99,14 +99,8 @@ function LandingPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const isProdHost =
-    typeof window !== "undefined" && window.location.hostname !== "localhost";
-  const STAFF_PORTAL_URL = isProdHost
-    ? "https://staff.ocsvp.com/login"
-    : "http://localhost:5173/login";
-  const INSURANCE_PORTAL_URL = isProdHost
-    ? "https://ins.ocsvp.com/login"
-    : "http://localhost:5175/login";
+  const STAFF_PORTAL_URL = import.meta.env.VITE_STAFF_PORTAL_URL || "http://localhost:5173/login";
+  const INSURANCE_PORTAL_URL = import.meta.env.VITE_LINKHAM_PORTAL_URL || "http://localhost:5175/login";
 
   return (
     /* MOBILE: allow safe vertical scroll on short viewports | DESKTOP: lock single viewport */
