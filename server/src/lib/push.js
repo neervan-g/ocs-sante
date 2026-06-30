@@ -80,7 +80,7 @@ function configureWebPush() {
   }
 
   webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT || "mailto:admin@ocsmedecins.com",
+    process.env.VAPID_SUBJECT || "mailto:admin@ocs-sante.com",
     keys.publicKey,
     keys.privateKey,
   );
