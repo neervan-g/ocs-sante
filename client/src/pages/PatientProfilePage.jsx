@@ -30,7 +30,7 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import LoadingState from "../components/LoadingState.jsx";
 import {
-  LongTermReviewHistorySheet,
+  LongTermReviewLogUpdateButton,
   useLongTermReviewLogUpdate,
 } from "../components/LongTermReviewLogUpdate.jsx";
 import Modal from "../components/Modal.jsx";

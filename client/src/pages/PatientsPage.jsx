@@ -20,7 +20,6 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import LoadingState from "../components/LoadingState.jsx";
 import {
-  LongTermReviewDueDateModal,
   useLongTermReviewLogUpdate,
 } from "../components/LongTermReviewLogUpdate.jsx";
 import PageHeader from "../components/PageHeader.jsx";
