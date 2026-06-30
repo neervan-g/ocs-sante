@@ -36,3 +36,7 @@ export function formatReviewTimelineDate(value) {
   const parsed = dayjs(value);
   return parsed.isValid() ? parsed.format("MMM D, YYYY") : "";
 }
+
+export function canLogLongTermReviewUpdate(role) {
+  return ["admin", "operator", "doctor"].includes(String(role || ""));
+}

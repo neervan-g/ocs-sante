@@ -30,8 +30,7 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import LoadingState from "../components/LoadingState.jsx";
 import {
-  LongTermReviewLogUpdateButton,
-  canLogLongTermReviewUpdate,
+  LongTermReviewHistorySheet,
   useLongTermReviewLogUpdate,
 } from "../components/LongTermReviewLogUpdate.jsx";
 import Modal from "../components/Modal.jsx";
@@ -62,6 +61,7 @@ import {
 } from "../lib/format.js";
 import { isPatientSubscribed } from "../lib/patientSubscription.js";
 import {
+  canLogLongTermReviewUpdate,
   defaultReviewDueDateInputValue,
   formatScheduledReviewDate,
   isPatientUnderReview,

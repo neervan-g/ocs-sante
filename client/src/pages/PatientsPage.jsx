@@ -20,7 +20,7 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import LoadingState from "../components/LoadingState.jsx";
 import {
-  canLogLongTermReviewUpdate,
+  LongTermReviewDueDateModal,
   useLongTermReviewLogUpdate,
 } from "../components/LongTermReviewLogUpdate.jsx";
 import PageHeader from "../components/PageHeader.jsx";
@@ -45,6 +45,7 @@ import {
 import { canBillPatientForUser } from "../lib/access.js";
 import { isPatientSubscribed } from "../lib/patientSubscription.js";
 import {
+  canLogLongTermReviewUpdate,
   formatReviewDueShort,
   formatReviewTimelineDate,
   isPatientUnderReview,

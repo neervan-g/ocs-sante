@@ -4,10 +4,6 @@ import ConfirmDialog from "./ConfirmDialog.jsx";
 import Modal from "./Modal.jsx";
 import { api } from "../lib/api.js";
 
-export function canLogLongTermReviewUpdate(role) {
-  return ["admin", "operator", "doctor"].includes(String(role || ""));
-}
-
 function LongTermReviewQuickActionsModal({
   open,
   patient,
