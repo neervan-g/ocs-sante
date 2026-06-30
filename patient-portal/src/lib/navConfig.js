@@ -1,0 +1,55 @@
+import {
+  LayoutDashboard,
+  HeartPulse,
+  CalendarCheck,
+  ReceiptText,
+  CircleUserRound,
+  Home,
+  FileText,
+  Calendar,
+  User,
+} from "lucide-react";
+
+export const PATIENT_NAV_ITEMS = [
+  {
+    to: "/dashboard",
+    label: "Dashboard",
+    mobileLabel: "Home",
+    icon: LayoutDashboard,
+    mobileIcon: Home,
+    mobileIconActive: Home,
+    end: true,
+  },
+  {
+    to: "/health-records",
+    label: "Health Records",
+    mobileLabel: "Records",
+    icon: HeartPulse,
+    mobileIcon: FileText,
+    mobileIconActive: FileText,
+  },
+  {
+    to: "/appointments",
+    label: "Appointments",
+    mobileLabel: "Visits",
+    icon: CalendarCheck,
+    mobileIcon: Calendar,
+    mobileIconActive: CalendarCheck,
+  },
+  {
+    to: "/billing",
+    label: "Billing",
+    mobileLabel: "Billing",
+    icon: ReceiptText,
+    mobileIcon: ReceiptText,
+    mobileIconActive: ReceiptText,
+  },
+  {
+    to: "/profile",
+    label: "Profile",
+    mobileLabel: "Profile",
+    icon: CircleUserRound,
+    mobileIcon: CircleUserRound,
+    mobileIconActive: User,
+  },
+];

@@ -1,0 +1,231 @@
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+const AMBIENT_BLUR_CROSSES = [
+  {
+    color: "text-[#2bccc4]",
+    position: "left-[5%] top-[10%] h-72 w-72",
+    duration: "22s",
+    delay: "0s",
+  },
+  {
+    color: "text-[#f7ba24]",
+    position: "right-[12%] top-[22%] h-64 w-64",
+    duration: "26s",
+    delay: "-4s",
+  },
+  {
+    color: "text-[#3b595c]",
+    position: "bottom-[15%] left-[20%] h-56 w-56",
+    duration: "18s",
+    delay: "-2s",
+  },
+  {
+    color: "text-[#f7ba24]",
+    position: "bottom-[5%] right-[5%] h-80 w-80",
+    duration: "28s",
+    delay: "-6s",
+  },
+  {
+    color: "text-[#2bccc4]",
+    position: "right-[8%] top-[48%] h-40 w-40",
+    duration: "24s",
+    delay: "-3s",
+  },
+];
+
+const BRAND_CROSS_PATH = "M9 20h6v-5h5V9h-5V4H9v5H4v6h5v5z";
+
+/* High-blur, low-opacity breathing crosses — z-0 behind hero content */
+function AmbientBlurCrossBackground() {
+  return (
+    <div
+      className="ambient-cross-layer bg-gradient-to-tr from-slate-50 to-white"
+      aria-hidden="true"
+    >
+      {AMBIENT_BLUR_CROSSES.map((cross) => (
+        <div
+          key={cross.position}
+          className={`ambient-blur-cross ${cross.color} ${cross.position}`}
+          style={{ animationDuration: cross.duration, animationDelay: cross.delay }}
+        >
+          <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+            <path d={BRAND_CROSS_PATH} fill="currentColor" />
+          </svg>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FadeInSection({ children, delay = 0, className = "" }) {
+  const ref = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 },
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${
+        isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+      } ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function LandingPage() {
+  const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const isProdHost =
+    typeof window !== "undefined" && window.location.hostname !== "localhost";
+  const STAFF_PORTAL_URL = isProdHost
+    ? "https://staff.ocsvp.com/login"
+    : "http://localhost:5173/login";
+  const INSURANCE_PORTAL_URL = isProdHost
+    ? "https://ins.ocsvp.com/login"
+    : "http://localhost:5175/login";
+
+  return (
+    /* MOBILE: allow safe vertical scroll on short viewports | DESKTOP: lock single viewport */
+    <div className="landing-page relative flex min-h-svh w-full min-w-0 max-w-[100vw] flex-col justify-between overflow-x-hidden overscroll-x-none md:min-h-screen md:overflow-hidden">
+      <AmbientBlurCrossBackground />
+      
+      <header
+        className={`relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5 transition-all duration-700 ${
+          mounted ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
+        }`}
+      >
+        <a
+          href="/"
+          className="flex items-center gap-1.5 transition-opacity hover:opacity-90"
+        >
+          <img
+            src="/ocs-medecins-mark.png"
+            alt="OCS Santé Logo Mark"
+            className="h-10 w-10 shrink-0 object-contain"
+          />
+          <div 
+            className="w-[1.5px] rounded-full opacity-60 shrink-0" 
+            style={{ height: 28, background: "linear-gradient(to bottom, #2bccc4, #f7ba24)" }} 
+          />
+          <div className="flex flex-col justify-center leading-none">
+            <span 
+              className="text-slate-600 flex items-center tracking-tight" 
+              style={{ fontSize: 30, fontWeight: 400, marginTop: -2 }}
+            >
+              <span className="text-[#32b5b8] font-bold">OCS</span>
+              <span className="text-[#64748b]">Santé</span>
+            </span>
+            <span 
+              className="text-slate-500 font-semibold uppercase" 
+              style={{ fontSize: 7, letterSpacing: "0.22em", marginTop: 2, marginLeft: 1 }}
+            >
+              Home Visit Doctors
+            </span>
+          </div>
+        </a>
+        <div className="flex items-center gap-4 text-xs font-semibold tracking-wide text-[#3b595c]">
+          <a
+            href={STAFF_PORTAL_URL}
+            className="transition-colors hover:text-[#065a60]"
+          >
+            Staff Login
+          </a>
+          <a
+            href={INSURANCE_PORTAL_URL}
+            className="transition-colors hover:text-[#065a60]"
+          >
+            Insurance Portal
+          </a>
+        </div>
+      </header>
+
+      <main className="relative z-10 my-auto flex flex-1 flex-col items-center justify-center px-4 text-center">
+        <div className="w-full">
+          <FadeInSection>
+            <span className="mb-3 block text-[10px] font-extrabold uppercase tracking-widest text-[#3e5c76] md:text-[11px]">
+              OCS Santé — Virtual Practice
+            </span>
+          </FadeInSection>
+
+          <FadeInSection delay={150}>
+            <h1 className="mx-auto max-w-2xl bg-gradient-to-r from-[#3b595c] via-[#2bccc4] to-[#065a60] bg-clip-text text-center text-4xl font-black leading-tight tracking-tight text-transparent sm:text-5xl md:text-6xl">
+              <span className="block sm:inline">Step into a</span>{" "}
+              <span className="block sm:inline">world of Care</span>
+            </h1>
+          </FadeInSection>
+
+          <FadeInSection delay={300}>
+            <div className="mx-auto mt-6 w-full max-w-2xl px-2">
+              <p className="text-[11px] font-bold uppercase leading-relaxed tracking-wide text-[#3b595c] sm:text-xs">
+                We are more than a healthcare service — We are a community of care.
+              </p>
+
+              <p className="mx-auto mt-3 max-w-md text-xs font-black leading-normal tracking-tight text-[#14213d] sm:max-w-none sm:text-sm md:text-base">
+                <span className="block sm:inline">One Commitment</span>
+                <span
+                  className="mx-auto my-1.5 block h-px w-16 rounded-full bg-[#f7ba24] sm:hidden"
+                  aria-hidden="true"
+                />
+                <span className="mx-1.5 hidden text-[#f7ba24] sm:inline">|</span>
+                <span className="block sm:mt-0 sm:inline">One Promise</span>
+                <span
+                  className="mx-auto my-1.5 block h-px w-16 rounded-full bg-[#f7ba24] sm:hidden"
+                  aria-hidden="true"
+                />
+                <span className="mx-1.5 hidden text-[#f7ba24] sm:inline">|</span>
+                <span className="block text-[#065a60] sm:inline">
+                  Bringing healthcare to every Mauritian doorstep
+                </span>
+              </p>
+            </div>
+          </FadeInSection>
+
+          <FadeInSection delay={450}>
+            {/*
+              MOBILE: full-width vertical stack for thumb reach
+              TABLET+ (md): side-by-side capsule row
+            */}
+            <div className="mx-auto mt-8 flex w-full max-w-sm flex-col justify-center sm:mt-10 md:flex-row md:items-center md:justify-center">
+              <button
+                onClick={() => navigate("/login")}
+                className="glow-amber-capsule w-full touch-manipulation rounded-full bg-gradient-to-r from-[#f7ba24] to-[#e0a112] px-10 py-4 text-center text-sm font-black tracking-wide text-[#14213d] transition-all duration-300 active:scale-[0.98] md:w-auto"
+              >
+                Patient Portal →
+              </button>
+            </div>
+          </FadeInSection>
+        </div>
+      </main>
+
+      <footer className="relative z-10 w-full max-w-7xl self-center px-5 py-4 text-center text-[10px] font-medium tracking-wide text-gray-400 sm:py-6">
+        © {new Date().getFullYear()} OCS Santé. All rights reserved.
+      </footer>
+    </div>
+  );
+}
+
+export default LandingPage;

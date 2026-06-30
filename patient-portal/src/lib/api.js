@@ -1,0 +1,111 @@
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+const AUTH_TOKEN_KEY = "ocs_patient_auth_token";
+
+export function getStoredAuthToken() {
+  return window.localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+export function setStoredAuthToken(token) {
+  if (token) {
+    window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+    return;
+  }
+
+  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+}
+
+/**
+ * Build an absolute URL to an authenticated file endpoint (e.g. a report PDF),
+ * carrying the bearer token in the query string since a plain <a>/window.open
+ * cannot send an Authorization header.
+ */
+export function buildAuthedFileUrl(path) {
+  const token = getStoredAuthToken();
+  const separator = path.includes("?") ? "&" : "?";
+  return `${API_BASE}${path}${token ? `${separator}access_token=${encodeURIComponent(token)}` : ""}`;
+}
+
+function createApiError(message, data) {
+  const error = new Error(message);
+  if (data?.code) {
+    error.code = data.code;
+  }
+  return error;
+}
+
+async function apiRequest(path, options = {}) {
+  const authToken = getStoredAuthToken();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  if (!options.skipAuth && authToken && !headers.Authorization) {
+    headers.Authorization = `Bearer ${authToken}`;
+  }
+
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!response.ok) {
+    if (response.status === 401 && authToken) {
+      if (getStoredAuthToken() === authToken) {
+        setStoredAuthToken(null);
+      }
+
+      window.dispatchEvent(
+        new CustomEvent("auth:unauthorized", {
+          detail: { token: authToken },
+        }),
+      );
+    }
+
+    throw createApiError(data?.error || "Something went wrong.", data);
+  }
+
+  return data;
+}
+
+async function apiFormRequest(path, formData, options = {}) {
+  const authToken = getStoredAuthToken();
+  const headers = { ...(options.headers || {}) };
+
+  if (!options.skipAuth && authToken && !headers.Authorization) {
+    headers.Authorization = `Bearer ${authToken}`;
+  }
+
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!response.ok) {
+    throw createApiError(data?.error || "Something went wrong.", data);
+  }
+
+  return data;
+}
+
+export const api = {
+  get: (path) => apiRequest(path),
+  post: (path, body, options = {}) => apiRequest(path, { ...options, method: "POST", body }),
+  postForm: (path, formData, options = {}) => apiFormRequest(path, formData, options),
+  put: (path, body, options = {}) => apiRequest(path, { ...options, method: "PUT", body }),
+  patch: (path, body, options = {}) => apiRequest(path, { ...options, method: "PATCH", body }),
+  delete: (path, options = {}) => apiRequest(path, { ...options, method: "DELETE" }),
+};

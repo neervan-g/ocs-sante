@@ -1,0 +1,331 @@
+import { useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import MobilePatientRegisterForm from "../components/auth/MobilePatientRegisterForm.jsx";
+import { useIsMobile } from "../hooks/useIsMobile.js";
+import { usePatientAuth } from "../hooks/usePatientAuth.jsx";
+import { formatDisplayName } from "../lib/formatDisplayName.js";
+
+const STAFF_PORTAL_URL =
+  typeof window !== "undefined" && window.location.hostname !== "localhost"
+    ? "https://staff.ocsvp.com/login"
+    : "http://localhost:5173/login";
+
+const INPUT_CLASS =
+  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm font-medium text-[#14213d] placeholder:text-gray-400 transition-all focus:border-[#065a60] focus:outline-none focus:ring-4 focus:ring-[#065a60]/5";
+
+const LABEL_CLASS =
+  "mb-2 block text-[10px] font-black uppercase tracking-wider text-[#3b595c]";
+
+const SECTION_CLASS =
+  "text-[10px] font-extrabold uppercase tracking-widest text-[#065a60]";
+
+function PatientRegisterPage() {
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const { isAuthenticated, isBootstrapping, register } = usePatientAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    national_id: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [errors, setErrors] = useState({});
+
+  if (!isBootstrapping && isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (isMobile) {
+    return <MobilePatientRegisterForm />;
+  }
+
+  function validate() {
+    const newErrors = {};
+
+    if (!form.full_name.trim()) newErrors.full_name = "Full name is required.";
+    if (!form.email.trim()) newErrors.email = "Email is required.";
+    if (!form.phone.trim()) newErrors.phone = "Phone number is required.";
+    if (!form.national_id.trim()) {
+      newErrors.national_id = "National ID is required to match your medical records.";
+    }
+    if (!form.password) newErrors.password = "Password is required.";
+    if (form.password.length < 6) newErrors.password = "Password must be at least 6 characters.";
+    if (form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    if (!validate()) return;
+
+    setIsSubmitting(true);
+
+    register({
+      full_name: form.full_name.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      national_id: form.national_id.trim(),
+      password: form.password,
+    })
+      .then((newUser) => {
+        toast.success(`Welcome, ${formatDisplayName(newUser.full_name)}! Your account has been created.`);
+        navigate("/dashboard", { replace: true });
+      })
+      .catch((error) => {
+        toast.error(error.message);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
+  }
+
+  function setField(field) {
+    return (event) => {
+      const value = event.target ? event.target.value : event;
+      setForm((current) => ({ ...current, [field]: value }));
+      if (errors[field]) setErrors((current) => ({ ...current, [field]: undefined }));
+    };
+  }
+
+  return (
+    <div className="flex min-h-svh w-full min-w-0 max-w-[100vw] flex-col overflow-hidden bg-white font-sans antialiased md:flex-row">
+      {/* Left: brand canvas */}
+      <div className="relative flex w-full shrink-0 flex-col overflow-hidden bg-gradient-to-br from-[#f4fbfb] via-[#ebf6f6] to-[#dceeee] p-12 md:sticky md:top-0 md:h-svh md:w-1/2 lg:p-16">
+        <div className="pointer-events-none absolute -left-20 -top-20 h-96 w-96 rounded-full bg-[#2bccc4]/15 blur-[120px]" />
+        <div className="pointer-events-none absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-[#f7ba24]/10 blur-[100px]" />
+
+        <div className="relative z-10 flex flex-col items-start">
+          <Link to="/" className="flex items-center gap-1.5 transition-opacity hover:opacity-90">
+            <img
+              src="/ocs-medecins-mark.png"
+              alt="OCS Santé Logo Mark"
+              className="h-12 w-12 shrink-0 object-contain"
+            />
+            <div 
+              className="w-[1.5px] rounded-full opacity-60 shrink-0" 
+              style={{ height: 34, background: "linear-gradient(to bottom, #2bccc4, #f7ba24)" }} 
+            />
+            <div className="flex flex-col justify-center leading-none">
+              <span className="text-slate-600 flex items-center tracking-tight" style={{ fontSize: 36, fontWeight: 400, marginTop: -2 }}>
+                <span className="text-[#32b5b8] font-bold">OCS</span>
+                <span className="text-[#64748b]">Santé</span>
+              </span>
+              <span className="text-slate-500 font-semibold uppercase" style={{ fontSize: 9, letterSpacing: "0.22em", marginTop: 2, marginLeft: 1 }}>
+                Home Visit Doctors
+              </span>
+            </div>
+            <span className="mt-3 block text-xs font-bold uppercase tracking-[0.25em] text-[#065a60]">
+              Patient Portal
+            </span>
+          </Link>
+        </div>
+
+        <div className="relative z-10 pt-10 lg:pt-12">
+          <div className="flex max-w-xl gap-5 lg:gap-6">
+            <div
+              className="amber-banner-accent w-1.5 shrink-0 self-stretch rounded-full bg-gradient-to-b from-[#f7ba24] to-[#e0a112]"
+              aria-hidden="true"
+            />
+            <div className="min-w-0">
+              <h1 className="text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl xl:text-[4.25rem]">
+                <span className="block text-[#3b595c]">Bringing Premium Care</span>
+                <span className="block text-[#3b595c]">
+                  at Your <span className="text-[#f7ba24]">Doorstep.</span>
+                </span>
+              </h1>
+              <p className="mt-6 max-w-lg text-base font-semibold leading-relaxed tracking-wide text-[#065a60] sm:text-lg lg:mt-8 lg:text-xl">
+                Join OCS Care to manage your health in one secure place
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1" aria-hidden="true" />
+
+        <div className="relative z-10 text-[10px] font-medium tracking-wider text-[#3b595c]/45">
+          PATIENT HEALTH HUB © {new Date().getFullYear()} OCS SANTÉ
+        </div>
+      </div>
+
+      {/* Right: registration form */}
+      <div className="flex w-full flex-col bg-white md:w-1/2 md:overflow-y-auto">
+        <div className="flex min-h-svh flex-col justify-between p-12 lg:p-16">
+          <div className="h-8" />
+
+          <div className="mx-auto my-auto w-full max-w-sm py-4">
+            <div className="mb-8">
+              <span className={SECTION_CLASS}>→ Create Patient Account</span>
+              <h2 className="mt-1.5 text-2xl font-black tracking-tight text-[#14213d]">
+                Create your patient account
+              </h2>
+              <p className="mt-2 text-xs font-medium leading-relaxed text-gray-500">
+                Register with your personal details to access appointments, records, and
+                billing through the patient portal.
+              </p>
+            </div>
+
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div>
+                <p className={SECTION_CLASS}>Personal information</p>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label htmlFor="register-full-name" className={LABEL_CLASS}>
+                      Full name
+                    </label>
+                    <input
+                      id="register-full-name"
+                      value={form.full_name}
+                      onChange={setField("full_name")}
+                      placeholder="Enter your full name"
+                      className={INPUT_CLASS}
+                    />
+                    {errors.full_name && (
+                      <p className="mt-1.5 text-xs font-medium text-red-500">{errors.full_name}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="register-email" className={LABEL_CLASS}>
+                      Email address
+                    </label>
+                    <input
+                      id="register-email"
+                      type="email"
+                      value={form.email}
+                      onChange={setField("email")}
+                      placeholder="Enter your email address"
+                      className={INPUT_CLASS}
+                    />
+                    {errors.email && (
+                      <p className="mt-1.5 text-xs font-medium text-red-500">{errors.email}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="register-phone" className={LABEL_CLASS}>
+                      Phone number
+                    </label>
+                    <input
+                      id="register-phone"
+                      type="tel"
+                      value={form.phone}
+                      onChange={setField("phone")}
+                      placeholder="Enter your phone number"
+                      className={INPUT_CLASS}
+                    />
+                    {errors.phone && (
+                      <p className="mt-1.5 text-xs font-medium text-red-500">{errors.phone}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="register-national-id" className={LABEL_CLASS}>
+                      National ID number <span className="text-[#065a60]">*</span>
+                    </label>
+                    <input
+                      id="register-national-id"
+                      value={form.national_id}
+                      onChange={setField("national_id")}
+                      placeholder="e.g. your government-issued NIC"
+                      className={INPUT_CLASS}
+                      autoComplete="off"
+                      required
+                    />
+                    {errors.national_id && (
+                      <p className="mt-1.5 text-xs font-medium text-red-500">{errors.national_id}</p>
+                    )}
+                    <p className="mt-1.5 text-xs leading-relaxed text-gray-500">
+                      Enter your government-issued ID to help us match your clinic record. This is{" "}
+                      <span className="font-semibold text-[#14213d]">not</span> your OCS care number
+                      (e.g. #OCS-224). OCS numbers are assigned by the clinic and cannot be used here.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p className={SECTION_CLASS}>Create your password</p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="register-password" className={LABEL_CLASS}>
+                      Password
+                    </label>
+                    <input
+                      id="register-password"
+                      type="password"
+                      value={form.password}
+                      onChange={setField("password")}
+                      placeholder="Enter your password"
+                      className={INPUT_CLASS}
+                    />
+                    {errors.password && (
+                      <p className="mt-1.5 text-xs font-medium text-red-500">{errors.password}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="register-confirm-password" className={LABEL_CLASS}>
+                      Confirm password
+                    </label>
+                    <input
+                      id="register-confirm-password"
+                      type="password"
+                      value={form.confirmPassword}
+                      onChange={setField("confirmPassword")}
+                      placeholder="Confirm your password"
+                      className={INPUT_CLASS}
+                    />
+                    {errors.confirmPassword && (
+                      <p className="mt-1.5 text-xs font-medium text-red-500">
+                        {errors.confirmPassword}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="glow-teal-capsule mt-2 block w-full rounded-full bg-gradient-to-r from-[#1c4e52] to-[#123638] py-4 text-center text-xs font-black tracking-wide text-white shadow-[0_10px_25px_-5px_rgba(28,78,82,0.35)] transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_15px_30px_-5px_rgba(28,78,82,0.5)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? "Creating account..." : "Create Patient Account"}
+              </button>
+            </form>
+
+            <div className="mt-8 text-center">
+              <Link
+                to="/login"
+                className="group inline-flex items-center gap-1.5 text-xs font-bold text-gray-400 transition-colors hover:text-[#065a60]"
+              >
+                <span className="transform transition-transform duration-200 group-hover:-translate-x-0.5">
+                  ←
+                </span>
+                Already have an account? Sign in
+              </Link>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <a
+              href={STAFF_PORTAL_URL}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-400 transition-colors hover:text-[#065a60]"
+            >
+              Staff member? Sign in to staff portal
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default PatientRegisterPage;

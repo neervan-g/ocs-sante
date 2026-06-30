@@ -1,0 +1,158 @@
+const express = require("express");
+const { db } = require("../db");
+const { publishLinkhamClaimsChange, publishPatientDataChange } = require("../lib/inventoryRealtime");
+const {
+  approveLinkhamClaim,
+  approveLinkhamCleanClaimsBatch,
+  getLinkhamAnalyticsReports,
+  getLinkhamClaimById,
+  getLinkhamDashboardMetrics,
+  getLinkhamPatientById,
+  listLinkhamClaims,
+  listLinkhamPatients,
+  setLinkhamClaimDisputeStatus,
+  summarizeLinkhamClaimsLedger,
+} = require("../lib/linkhamPortal");
+
+const router = express.Router();
+
+function publishPatientBillingChangeForClaim(claim) {
+  const billingId = Number(claim?.id || 0);
+  if (!billingId) {
+    return;
+  }
+
+  const row = db.prepare("SELECT patient_id FROM billing WHERE id = ?").get(billingId);
+  if (row?.patient_id) {
+    publishPatientDataChange(row.patient_id, { reason: "billing" });
+  }
+}
+
+function publishPatientBillingChangesForClaims(claims = []) {
+  const patientIds = new Set();
+
+  claims.forEach((claim) => {
+    const billingId = Number(claim?.id || 0);
+    if (!billingId) {
+      return;
+    }
+
+    const row = db.prepare("SELECT patient_id FROM billing WHERE id = ?").get(billingId);
+    if (row?.patient_id) {
+      patientIds.add(Number(row.patient_id));
+    }
+  });
+
+  patientIds.forEach((patientId) => {
+    publishPatientDataChange(patientId, { reason: "billing" });
+  });
+}
+
+router.get("/dashboard", (_req, res) => {
+  res.json(getLinkhamDashboardMetrics());
+});
+
+router.get("/reports", (req, res) => {
+  res.json(
+    getLinkhamAnalyticsReports({
+      seenTimeFilter: req.query.seenFilter,
+      claimsTimeFilter: req.query.claimsFilter,
+    }),
+  );
+});
+
+router.get("/patients", (_req, res) => {
+  res.json({ patients: listLinkhamPatients() });
+});
+
+router.get("/patients/:id", (req, res) => {
+  const patient = getLinkhamPatientById(req.params.id);
+
+  if (!patient) {
+    return res.status(404).json({ error: "Linkham client not found." });
+  }
+
+  res.json({ patient });
+});
+
+router.get("/claims", (_req, res) => {
+  const claims = listLinkhamClaims();
+  const ledger = summarizeLinkhamClaimsLedger(claims);
+
+  res.json({
+    claims,
+    ...ledger,
+  });
+});
+
+router.patch("/claims/batch-approve-clean", (req, res) => {
+  const result = approveLinkhamCleanClaimsBatch();
+
+  publishLinkhamClaimsChange({
+    changedByUserId: req.auth.id,
+  });
+  publishPatientBillingChangesForClaims(result.approvedClaims || []);
+
+  res.json(result);
+});
+
+router.get("/claims/:id/summary", (req, res) => {
+  const claim = getLinkhamClaimById(req.params.id);
+
+  if (!claim) {
+    return res.status(404).json({ error: "Claim not found." });
+  }
+
+  res.json({
+    claim,
+    summary: {
+      title: "Linkham Coverage Verification Summary",
+      visit_date: claim.visit_date,
+      patient_name: claim.patient_name,
+      patient_identifier: claim.patient_identifier,
+      visit_id: claim.id_short,
+      doctor_name: claim.doctor_name,
+      total_amount: claim.total_amount,
+      patient_copay_amount: claim.patient_copay_amount,
+      linkham_share_amount: claim.linkham_share_amount,
+      claim_status: claim.linkham_claim_status,
+      dispute_status: claim.dispute_status,
+      generated_at: new Date().toISOString(),
+    },
+  });
+});
+
+router.patch("/claims/:id/approve", (req, res) => {
+  const updated = approveLinkhamClaim(req.params.id);
+
+  if (!updated) {
+    return res.status(404).json({ error: "Claim not found or cannot be approved." });
+  }
+
+  publishLinkhamClaimsChange({
+    claimId: updated.id,
+    changedByUserId: req.auth.id,
+  });
+  publishPatientBillingChangeForClaim(updated);
+
+  res.json(updated);
+});
+
+router.patch("/claims/:id/dispute", (req, res) => {
+  const disputeStatus = req.body?.dispute_status;
+  const updated = setLinkhamClaimDisputeStatus(req.params.id, disputeStatus);
+
+  if (!updated) {
+    return res.status(404).json({ error: "Claim not found." });
+  }
+
+  publishLinkhamClaimsChange({
+    claimId: updated.id,
+    changedByUserId: req.auth.id,
+  });
+  publishPatientBillingChangeForClaim(updated);
+
+  res.json(updated);
+});
+
+module.exports = router;
