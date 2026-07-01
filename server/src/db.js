@@ -60,7 +60,7 @@ const seededPatients = [
     next_of_kin_contact_number: "+1 555-0166",
     next_of_kin_email: "laura.carter@example.com",
     next_of_kin_address: "18 Pine Avenue, Springfield",
-    assigned_doctor_name: doctorAccounts[0].full_name,
+    assigned_doctor_name: doctorAccounts[0]?.full_name || null,
   },
   {
     first_name: "Maya",
@@ -85,7 +85,7 @@ const seededPatients = [
     next_of_kin_contact_number: "+1 555-0184",
     next_of_kin_email: "anika.singh@example.com",
     next_of_kin_address: "42 Cedar Lane, Springfield",
-    assigned_doctor_name: doctorAccounts[1].full_name,
+    assigned_doctor_name: doctorAccounts[1]?.full_name || null,
   },
 ];
 
@@ -2095,76 +2095,78 @@ function seedDatabase() {
     if (appointmentsCount === 0) {
       const primaryDoctorId = db
         .prepare("SELECT id FROM doctors WHERE full_name = ?")
-        .get(doctorAccounts[0].full_name)?.id;
+        .get(doctorAccounts[0]?.full_name)?.id || null;
       const secondDoctorId = db
         .prepare("SELECT id FROM doctors WHERE full_name = ?")
-        .get(doctorAccounts[1].full_name)?.id;
+        .get(doctorAccounts[1]?.full_name)?.id || null;
       const thirdDoctorId = db
         .prepare("SELECT id FROM doctors WHERE full_name = ?")
-        .get(doctorAccounts[2].full_name)?.id;
+        .get(doctorAccounts[2]?.full_name)?.id || null;
 
-      const appointmentIds = [];
-      appointmentIds.push(
-        insertAppointment.run(1, primaryDoctorId, getTodayLocal(), "09:30", "scheduled")
-          .lastInsertRowid,
-      );
-      appointmentIds.push(
-        insertAppointment.run(2, secondDoctorId, offsetLocalDate(2), "11:00", "scheduled")
-          .lastInsertRowid,
-      );
-      appointmentIds.push(
-        insertAppointment.run(1, thirdDoctorId, offsetLocalDate(-1), "15:00", "completed")
-          .lastInsertRowid,
-      );
-      appointmentIds.push(
-        insertAppointment.run(2, primaryDoctorId, getTodayLocal(), "14:30", "completed")
-          .lastInsertRowid,
-      );
+      if (primaryDoctorId && secondDoctorId && thirdDoctorId) {
+        const appointmentIds = [];
+        appointmentIds.push(
+          insertAppointment.run(1, primaryDoctorId, getTodayLocal(), "09:30", "scheduled")
+            .lastInsertRowid,
+        );
+        appointmentIds.push(
+          insertAppointment.run(2, secondDoctorId, offsetLocalDate(2), "11:00", "scheduled")
+            .lastInsertRowid,
+        );
+        appointmentIds.push(
+          insertAppointment.run(1, thirdDoctorId, offsetLocalDate(-1), "15:00", "completed")
+            .lastInsertRowid,
+        );
+        appointmentIds.push(
+          insertAppointment.run(2, primaryDoctorId, getTodayLocal(), "14:30", "completed")
+            .lastInsertRowid,
+        );
 
-      const firstConsultationId = insertConsultation.run(
-        appointmentIds[2],
-        1,
-        thirdDoctorId,
-        offsetLocalDate(-1),
-        "Patient reported a persistent rash on the forearm. Prescribed a topical steroid and advised a 10-day review.",
-      ).lastInsertRowid;
+        const firstConsultationId = insertConsultation.run(
+          appointmentIds[2],
+          1,
+          thirdDoctorId,
+          offsetLocalDate(-1),
+          "Patient reported a persistent rash on the forearm. Prescribed a topical steroid and advised a 10-day review.",
+        ).lastInsertRowid;
 
-      const secondConsultationId = insertConsultation.run(
-        appointmentIds[3],
-        2,
-        primaryDoctorId,
-        getTodayLocal(),
-        "Follow-up consultation for fatigue and headaches. Ordered a CBC panel and advised hydration, rest, and a one-week follow-up.",
-      ).lastInsertRowid;
+        const secondConsultationId = insertConsultation.run(
+          appointmentIds[3],
+          2,
+          primaryDoctorId,
+          getTodayLocal(),
+          "Follow-up consultation for fatigue and headaches. Ordered a CBC panel and advised hydration, rest, and a one-week follow-up.",
+        ).lastInsertRowid;
 
-      const paidItems = normalizeBillingItems([
-        { description: "Dermatology Consultation", amount: 120 },
-        { description: "Medication Guidance", amount: 25 },
-      ]);
-      const unpaidItems = normalizeBillingItems([
-        { description: "General Consultation", amount: 95 },
-        { description: "Lab Work Coordination", amount: 35 },
-      ]);
+        const paidItems = normalizeBillingItems([
+          { description: "Dermatology Consultation", amount: 120 },
+          { description: "Medication Guidance", amount: 25 },
+        ]);
+        const unpaidItems = normalizeBillingItems([
+          { description: "General Consultation", amount: 95 },
+          { description: "Lab Work Coordination", amount: 35 },
+        ]);
 
-      insertBilling.run(
-        firstConsultationId,
-        1,
-        JSON.stringify(paidItems),
-        calculateBillingTotal(paidItems),
-        "paid",
-        "cash",
-        offsetLocalDate(-1),
-      );
+        insertBilling.run(
+          firstConsultationId,
+          1,
+          JSON.stringify(paidItems),
+          calculateBillingTotal(paidItems),
+          "paid",
+          "cash",
+          offsetLocalDate(-1),
+        );
 
-      insertBilling.run(
-        secondConsultationId,
-        2,
-        JSON.stringify(unpaidItems),
-        calculateBillingTotal(unpaidItems),
-        "unpaid",
-        null,
-        null,
-      );
+        insertBilling.run(
+          secondConsultationId,
+          2,
+          JSON.stringify(unpaidItems),
+          calculateBillingTotal(unpaidItems),
+          "unpaid",
+          null,
+          null,
+        );
+      }
     }
 
     if (labReportsCount === 0) {
