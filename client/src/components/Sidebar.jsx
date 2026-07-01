@@ -386,11 +386,10 @@ function Sidebar() {
       {/* ─── Desktop: full sidebar ─── */}
       <aside className="hidden w-full min-w-0 border-r border-slate-200 bg-white text-slate-900 lg:flex lg:w-80 lg:shrink-0 lg:flex-col">
         <div className="flex flex-1 flex-col px-6 py-6">
-          <div className="inline-flex w-full rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex w-full rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm overflow-hidden">
             <BrandMark
-              maxWidth={240}
               logoClassName="drop-shadow-sm"
-              size={56}
+              size={52}
             />
           </div>
 
