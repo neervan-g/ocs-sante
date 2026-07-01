@@ -1,6 +1,8 @@
 const doctorAccounts = [];
 
-const supportAccounts = [];
+const supportAccounts = [
+  { username: "linkham01", full_name: "Linkham Coverage Auditor", role: "linkham_admin" },
+];
 
 const adminAccount = {
   username: "akshay.jeetah",
